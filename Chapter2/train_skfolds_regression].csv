@@ -1,0 +1,57 @@
+"""
+回帰モデルでのstratified k-fold
+"""
+
+import numpy as np
+import pandas as pd
+
+from sklearn import datasets
+from sklearn import model_selection
+
+def create_folds(df):
+    
+    # kfoldという新しい列を作り、-1で初期化
+    df['kfold'] = -1
+    
+    # サンプルをシャッフル
+    df = df.sample(frac=1).reset_index(drop=True)
+    
+    """
+    スタージェスの公式に基づき、ビン数を計算
+    小数点以下を切り捨て、値をint型に変換する
+    """
+    num_bins = int(np.floor(1 + np.log2(len(df))))
+    
+    # 目的変数をビンに変換
+    df.loc[:, 'bins'] = pd.cut(df['target'], bins=num_bins, labels=False)
+    
+    # StratifiedKFoldクラスの初期化
+    skf = model_selection.StratifiedKFold(n_splits=5)
+    
+    # skfold列を埋める
+    for fold, (train_, val_) in enumerate(skf.split(X=df, y=df.bins.values)):
+        df.loc[val_, 'skfold'] = fold
+    
+    # ビンの列を削除
+    df = df.drop('bins', axis=1)
+    
+    # データセットを新しい列と共に返却
+    return df
+
+if __name__ == '__main__':
+    
+    """
+    15000サンプルの回帰データセットを作成
+    特徴量は100列で目的変数は1列
+    """
+    
+    X, y = datasets.make_regression(
+        n_samples=15000, n_features=100, n_targets=1
+    )
+    
+    # 特徴量をpandasのデータフレームに変換
+    df = pd.DataFrame(X, columns=[f'f_{i}' for i in range(X.shape[1])])
+    df.loc[:, 'target'] = y
+    
+    # 分割を作成
+    df = create_folds(df)
