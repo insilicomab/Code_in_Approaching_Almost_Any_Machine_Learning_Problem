@@ -5,12 +5,17 @@ from sklearn.feature_selection import (
     chi2, f_classif, f_regression, mutual_info_classif, 
     mutual_info_regression, SelectKBest, SelectPercentile
 )
+from sklearn.preprocessing import StandardScaler
 
 # Bonstonデータセット
 boston = load_boston()
 X = boston.data
 y = boston.target
 
+# 説明変数の標準化
+sc = StandardScaler()
+sc.fit(X)
+X = sc.transform(X)
 
 # 単変量特徴量選択（univariate feature selection）のラッパークラスを作成
 class UnivariateFeatureSelection:
@@ -74,7 +79,7 @@ class UnivariateFeatureSelection:
         return self.selection.fit_transform(X, y)
 
 
-ufs = UnivariateFeatureSelection(n_features=0.1,
+ufs = UnivariateFeatureSelection(n_features=4,
                                  problem_type='regression',
                                  scoring='f_regression'
 )
